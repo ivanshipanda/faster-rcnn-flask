@@ -9,5 +9,7 @@ def index():
 
 @app.route('/post_image', methods=['POST'])
 def post_image():
+    print('reached here')
     if request.method == 'POST':
+        print(request.files)
         return render_template('index.html')

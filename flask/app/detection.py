@@ -1,6 +1,7 @@
 from torchvision.models.detection.faster_rcnn import fasterrcnn_resnet50_fpn
-import torch, cv2
+import torch, cv2, os
 import numpy as np
+
 
 COCO_INSTANCE_CATEGORY_NAMES = [
     '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
@@ -36,7 +37,7 @@ def display_predictions(output):
     for label in labels:
         print(COCO_INSTANCE_CATEGORY_NAMES[label])
 
-def process_predictions(output, threshold=0.90):
+def process_predictions(output, threshold=0.80):
     boxes = output[0]['boxes']
     labels = output[0]['labels']
     scores = output[0]['scores']
@@ -48,26 +49,43 @@ def process_predictions(output, threshold=0.90):
                 'label': COCO_INSTANCE_CATEGORY_NAMES[labels[idx]],
                 'score': scores[idx]
             })
+    if len(predictions) is 0:
+        idx = scores.index(max(scores))
+        predictions.append({
+            'box': boxes[idx],
+            'label': COCO_INSTANCE_CATEGORY_NAMES[labels[idx]],
+            'score': scores[idx]
+        })
     return predictions
 
 def draw_boxes(image, predictions):
-    for obj in predictions:
+    border_vertical = int(image.shape[0] / 10)
+    border_horizontal = int(image.shape[1] / 10)
+    size_factor = min(image.shape[:-1]) // 500 + 1
+    for obj in predictions:        
         image = cv2.rectangle(
             img = image,
             pt1 = (obj['box'][0], obj['box'][1]),
             pt2 = (obj['box'][2], obj['box'][3]),
             color = (0, 0, 255),
-            thickness = 2
+            thickness = size_factor
+        )
+        image = cv2.copyMakeBorder(
+            src = image,
+            top = border_vertical,
+            bottom = border_vertical,
+            left = border_horizontal,
+            right = border_horizontal,
+            borderType = cv2.BORDER_CONSTANT
         )
         image = cv2.putText(
             img = image,
             text = obj['label'],
-            org = (obj['box'][0], obj['box'][1] - 5  
-            if (obj['box'][1] - 5 >= 0) else obj['box'][1]),
+            org = (obj['box'][0] + border_horizontal, obj['box'][1] - 5 + border_vertical),
             fontFace = cv2.FONT_HERSHEY_PLAIN,
-            fontScale = 2.0,
+            fontScale = size_factor,
             color = (0, 0, 255),
-            thickness = 2
+            thickness = size_factor
         )
     return image
 
@@ -77,6 +95,7 @@ if __name__ == "__main__":
     tensor = cv2_to_tensor(image)
     output = model(tensor)
     predictions = process_predictions(output)
+    print(predictions)
     image = draw_boxes(image, predictions)
     show_image(image)
     
