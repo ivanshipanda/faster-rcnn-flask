@@ -40,20 +40,35 @@ def process_predictions(output, threshold=0.90):
     boxes = output[0]['boxes']
     labels = output[0]['labels']
     scores = output[0]['scores']
-    predictions = dict.fromkeys(output[0], [])
+    predictions = []
     for idx in range(len(scores)):
         if scores[idx] >= threshold:
-            predictions['boxes'].append(boxes[idx])
-            predictions['labels'].append(labels[idx])
-            predictions['scores'].append(scores[idx])
+            predictions.append({
+                'box': boxes[idx],
+                'label': COCO_INSTANCE_CATEGORY_NAMES[labels[idx]],
+                'score': scores[idx]
+            })
     return predictions
 
 def draw_boxes(image, predictions):
-    for idx in range(len(predictions['boxes'])):
-        print(len(predictions['boxes']))
-        box = predictions['boxes'][idx].detach()
-        box = box.numpy().astype(int)
-        image = cv2.rectangle(img=image, color=(255,255,255), thickness=1, pt1=(box[0],0), pt2=(100, 100))
+    for obj in predictions:
+        image = cv2.rectangle(
+            img = image,
+            pt1 = (obj['box'][0], obj['box'][1]),
+            pt2 = (obj['box'][2], obj['box'][3]),
+            color = (0, 0, 255),
+            thickness = 2
+        )
+        image = cv2.putText(
+            img = image,
+            text = obj['label'],
+            org = (obj['box'][0], obj['box'][1] - 5  
+            if (obj['box'][1] - 5 >= 0) else obj['box'][1]),
+            fontFace = cv2.FONT_HERSHEY_PLAIN,
+            fontScale = 2.0,
+            color = (0, 0, 255),
+            thickness = 2
+        )
     return image
 
 
