@@ -1,5 +1,5 @@
 from torchvision.models.detection.faster_rcnn import fasterrcnn_resnet50_fpn
-import torch, cv2, os
+import torch, cv2, os, base64
 import numpy as np
 
 
@@ -31,11 +31,6 @@ def cv2_to_tensor(image):
 def show_image(src):
     cv2.imshow('window', src)
     cv2.waitKey(0)
-
-def display_predictions(output):
-    labels = output[0]['labels']
-    for label in labels:
-        print(COCO_INSTANCE_CATEGORY_NAMES[label])
 
 def process_predictions(output, threshold=0.80):
     boxes = output[0]['boxes']
@@ -89,6 +84,21 @@ def draw_boxes(image, predictions):
         )
     return image
 
+def decode_image_file(image_file):
+    filestr = image_file.read()
+    npimg = np.fromstring(filestr, np.uint8)
+    image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    return image
+
+def detect(image_file):
+    image = decode_image_file(image_file)
+    tensor = cv2_to_tensor(image)
+    output = model(tensor)
+    predictions = process_predictions(output)
+    image = draw_boxes(image, predictions)
+    retval, buffer = cv2.imencode('.png', image)
+    encoded_image = base64.b64encode(buffer)
+    return encoded_image
 
 if __name__ == "__main__":
     image = cv2.imread('example.jpg', cv2.IMREAD_COLOR)
