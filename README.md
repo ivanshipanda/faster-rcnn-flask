@@ -20,3 +20,10 @@ The web server is hosted at http//:localhost:5000 and is accessible through your
 Just upload image of choice once on the web application. Hit submit. The output of the model is shown as such: 
 
 ![](results_ui.png)
+
+## Customize score threshold
+
+I've included a way to reduce the amount of objects that are outputted into the screen by introducing a filter
+through score. By default, any objects under the score of 0.70 will be ignored in the mapping of bounding boxes 
+and labels. You can change that parameter under flask/app/detection.py in the process_predictions() function. To
+include more objects.
