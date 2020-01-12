@@ -1,5 +1,5 @@
 from torchvision.models.detection.faster_rcnn import fasterrcnn_resnet50_fpn
-import torch, cv2, os, base64
+import torch, cv2, base64
 import numpy as np
 
 
@@ -32,7 +32,20 @@ def show_image(src):
     cv2.imshow('window', src)
     cv2.waitKey(0)
 
-def process_predictions(output, threshold=0.80):
+def add_border(image):
+    border_vertical = int(image.shape[0] * 0.05)
+    border_horizontal = int(image.shape[1] * 0.05)
+    image = cv2.copyMakeBorder(
+            src = image,
+            top = border_vertical,
+            bottom = border_vertical,
+            left = border_horizontal,
+            right = border_horizontal,
+            borderType = cv2.BORDER_CONSTANT
+        )
+    return image
+
+def process_predictions(output, threshold=0.70):
     boxes = output[0]['boxes']
     labels = output[0]['labels']
     scores = output[0]['scores']
@@ -54,29 +67,19 @@ def process_predictions(output, threshold=0.80):
     return predictions
 
 def draw_boxes(image, predictions):
-    border_vertical = int(image.shape[0] / 10)
-    border_horizontal = int(image.shape[1] / 10)
     size_factor = min(image.shape[:-1]) // 500 + 1
     for obj in predictions:        
         image = cv2.rectangle(
             img = image,
-            pt1 = (obj['box'][0], obj['box'][1]),
-            pt2 = (obj['box'][2], obj['box'][3]),
+            pt1 = (int(obj['box'][0].round()), int(obj['box'][1].round())),
+            pt2 = (int(obj['box'][2].round()), int(obj['box'][3].round())),
             color = (0, 0, 255),
             thickness = size_factor
-        )
-        image = cv2.copyMakeBorder(
-            src = image,
-            top = border_vertical,
-            bottom = border_vertical,
-            left = border_horizontal,
-            right = border_horizontal,
-            borderType = cv2.BORDER_CONSTANT
         )
         image = cv2.putText(
             img = image,
             text = obj['label'],
-            org = (obj['box'][0] + border_horizontal, obj['box'][1] - 5 + border_vertical),
+            org = (obj['box'][0], obj['box'][1] - 5),
             fontFace = cv2.FONT_HERSHEY_PLAIN,
             fontScale = size_factor,
             color = (0, 0, 255),
@@ -92,13 +95,14 @@ def decode_image_file(image_file):
 
 def detect(image_file):
     image = decode_image_file(image_file)
+    image = add_border(image)
     tensor = cv2_to_tensor(image)
     output = model(tensor)
     predictions = process_predictions(output)
     image = draw_boxes(image, predictions)
     retval, buffer = cv2.imencode('.png', image)
-    encoded_image = base64.b64encode(buffer)
-    return encoded_image
+    data_uri = base64.b64encode(buffer).decode('ascii')
+    return data_uri, predictions
 
 if __name__ == "__main__":
     image = cv2.imread('example.jpg', cv2.IMREAD_COLOR)

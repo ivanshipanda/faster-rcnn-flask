@@ -11,7 +11,11 @@ def index():
 def post_image():
     if request.method == 'POST':
         image_file = request.files.get('image-file', '')
-        image = detect(image_file)
-        return render_template('display.html', image=image)
+        image, predictions = detect(image_file)
+        context = {
+            "image": image,
+            "predictions": predictions
+        }
+        return render_template('display.html', context=context)
     else:
         return render_template('index.html')
