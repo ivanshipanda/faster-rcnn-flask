@@ -15,7 +15,7 @@ $ python3 flask/run.py
 ```
 The web server is hosted at http//:localhost:5000 and is accessible through your browser.
 
-## UI
+## User Interface
 
 Just upload image of choice once on the web application. Hit submit. The output of the model is shown as such: 
 
