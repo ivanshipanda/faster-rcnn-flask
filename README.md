@@ -21,6 +21,8 @@ Just upload image of choice once on the web application. Hit submit. The output 
 
 ![](results_ui.png)
 
+Note: Some predictions are cut off on the image
+
 ## Customize score threshold
 
 I've included a way to reduce the amount of objects that are outputted into the screen by introducing a filter
