@@ -105,7 +105,8 @@ def detect(image_file):
     return data_uri, predictions
 
 if __name__ == "__main__":
-    image = cv2.imread('example.jpg', cv2.IMREAD_COLOR)
+    image = cv2.imread('example_input.jpg', cv2.IMREAD_COLOR)
+    image = add_border(image)
     tensor = cv2_to_tensor(image)
     output = model(tensor)
     predictions = process_predictions(output)
